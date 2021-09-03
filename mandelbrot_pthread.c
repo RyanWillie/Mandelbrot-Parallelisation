@@ -155,6 +155,7 @@ void pmandelCompute(Parameters *p, int numThreads)
 	Range range[numThreads];
 	int i;
 
+	//assigning pthr the same values as in p struct
 	pthr[0] = *p;
 	pthr[1] = *p;
 
