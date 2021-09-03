@@ -13,7 +13,14 @@
 #include <complex.h>
 #include <time.h>
 #include "mandel.h"
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
+#define N 4
+
+enum{CHILD, PARENT};
 
 /* function prototypes */
 void initialise(Parameters *);
@@ -22,6 +29,11 @@ void writeToFile(Parameters);
 void histogramColouring(Parameters *p);
 void freeMemory(Parameters p);
 
+
+
+typedef struct{
+	int start, end;
+} Index;
 
 /* main program – execution begins here */
 int main(int argc, char *argv[])
@@ -107,8 +119,9 @@ void writeToFile(Parameters p)
 // compute the colour for each pixel using histogram algorithm
 void histogramColouring(Parameters *p)
 {
-	//histogramColouring_lib(p);
+	histogramColouring_lib(p);
 	//Get the total number of numiterations per pixel
+	/*
 	printf("	-> Using custom histogramColouring <-\n");
 	int total, i, j ,k, iterations;
 	for(i = 0; i < p->maxIter; i++){
@@ -123,6 +136,8 @@ void histogramColouring(Parameters *p)
 			printf("Completed: %d %d\n", i, j);
 		}
 	}
+	*/
+
 }
 
 // test each point in the complex plane to see if it is in the set or not
@@ -150,6 +165,7 @@ void mandelCompute(Parameters *p)
 		}			
 	}
 }
+
 
 // initialise the Parameters structure and dynamically allocate required arrays
 void initialise(Parameters *p)
@@ -201,8 +217,3 @@ void initialise(Parameters *p)
 		p->histogram[i] = 0;
 	}
 }
-
-
-
-
-

@@ -27,6 +27,7 @@ void mandelCompute_lib(Parameters *);
 void writeToFile_lib(Parameters);
 void histogramColouring_lib(Parameters *p);
 void freeMemory_lib(Parameters p);
+void parrmandelCompute(Parameters *p);
 
 
 #endif
