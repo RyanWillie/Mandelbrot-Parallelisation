@@ -159,6 +159,8 @@ void pmandelCompute(Parameters *p, int numThreads)
 	pthr[1] = *p;
 
 	//setting range start and end points
+	//change this to pthr[i].height = HEIGHT / numThreads -1
+	//then need mandelCompute for loop <= instead of <
 	range[0].start = 0;
 	range[0].end = HEIGHT / 2 - 1;
 	range[1].start = HEIGHT / 2;
