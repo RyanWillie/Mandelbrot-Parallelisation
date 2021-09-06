@@ -32,9 +32,8 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 typedef struct {
-	int start, end;
-	struct Parameters *p; 
-} Range;
+	int start, chunkSize;
+} Index;
 
 
 
@@ -50,18 +49,19 @@ int main(int argc, char *argv[])
 		maxIter = 5000;
 		p.xMin = p.yMin = -2;
 		p.xMax = p.yMax = 2;
+		numThreads = 2;
 	}
 	else if (argc == 2) {
 		sscanf(argv[1], "%i", &maxIter);
 		p.xMin = p.yMin = -2;
 		p.xMax = p.yMax = 2;
 	}
-	else if (argc == 5) {
+	else if (argc == 6) {
 		sscanf(argv[1], "%i", &maxIter);
 		sscanf(argv[2], "%lf", &xc);
 		sscanf(argv[3], "%lf", &yc);
 		sscanf(argv[4], "%lf", &size);
-		
+		sscanf(argv[5], "%d", &numThreads);
 		size = size / 2;
 		p.xMin = xc - size;
 		p.yMin = yc - size;
@@ -72,7 +72,6 @@ int main(int argc, char *argv[])
 	p.maxIter = maxIter;
 
 	//Number of threads
-	numThreads = 2;
 
 	printf("xMin = %lf\nxMax = %lf\nyMin = %lf\nyMax = %lf\nMaximum iterations = %i\n", p.xMin, p.xMax, p.yMin, p.yMax, p.maxIter);
 	
@@ -155,8 +154,21 @@ void pmandelCompute(Parameters *p, int numThreads)
 {
 	pthread_t thr[numThreads];
 	Parameters pthr[numThreads];
-	Range range[numThreads];
-	int i;
+	Index idx[numThreads];
+	int Chunk = p->height / numThreads;
+
+	for(int i=0; i < numThreads; i++){
+		idx[i].chunkSize = Chunk;
+		idx[i].start = i * Chunk;
+		pthr[i].carray = &p->carray;
+		pthr[i].height = Chunk;
+		pthr[i].width = p->width;
+		pthr[i].maxIter = p->maxIter;
+		
+	}
+
+
+
 
 	//assigning pthr the same values as in p struct
 	pthr[0] = *p;
