@@ -24,9 +24,8 @@ void mandelCompute(Parameters *);
 void writeToFile(Parameters);
 void histogramColouring(Parameters *p);
 void freeMemory(Parameters p);
-
-void pmandelCompute(Parameters *p, int numThreads);
-void *dowork(void *argv);
+void parrmandelCompute(Parameters *p);
+void *doWork(void *argv);
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -49,7 +48,7 @@ int main(int argc, char *argv[])
 		maxIter = 5000;
 		p.xMin = p.yMin = -2;
 		p.xMax = p.yMax = 2;
-		numThreads = 2;
+		p.numProcess = 2;
 	}
 	else if (argc == 2) {
 		sscanf(argv[1], "%i", &maxIter);
@@ -67,21 +66,22 @@ int main(int argc, char *argv[])
 		p.yMin = yc - size;
 		p.xMax = xc + size;
 		p.yMax = yc + size;
+		p.numProcess = numThreads;
 	}
 
 	p.maxIter = maxIter;
-
+	p.height = HEIGHT;
+	p.width = WIDTH;
 	//Number of threads
 
 	printf("xMin = %lf\nxMax = %lf\nyMin = %lf\nyMax = %lf\nMaximum iterations = %i\n", p.xMin, p.xMax, p.yMin, p.yMax, p.maxIter);
 	
 	initialise(&p);
-	pmandelCompute(&p, numThreads);
+	parrmandelCompute(&p);
 	//Compute(&p, numThreads);
 	histogramColouring(&p);
 	writeToFile(p);
 	freeMemory(p);
-	
 	return (0);
 }
 
@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
 void freeMemory(Parameters p)
 {
 	//freeMemory_lib(p);
+	printf("	-> Freeing Memory <-\n");
 	free(p.carray);
 	free(p.iterations);
 	free(p.histogram);
@@ -99,18 +100,20 @@ void freeMemory(Parameters p)
 void writeToFile(Parameters p)
 {
 	//writeToFile_lib(p);
+	printf("	-> Using custom writeToFile <-\n");
 	FILE *fp;
-	int i, j;
 	double complex c;
 	
+	//Attempt to open the file
 	if((fp = fopen("mandel.dat", "w")) == NULL){
 		perror("Cannot open mandel.dat file");
 		exit(EXIT_FAILURE);
 	}
-	for(i = 0; i < HEIGHT; i++){
-		for(j = 0; j < WIDTH; j++){
-			c = p.carray[i * WIDTH + j];
-			fprintf(fp, "%.12lf %.12lf %.12lf\n", creal(c), cimag(c), p.pixels[i * WIDTH + j]);
+
+	for(int i=0; i < p.height; i++){
+		for(int j=0; j < p.width; j++){
+			c = p.carray[i * p.width + j];
+			fprintf(fp, "%.12lf %.12lf %.12lf\n", creal(c), cimag(c), p.pixels[i*p.width + j]);
 		}
 		fprintf(fp, "\n");
 	}
@@ -150,57 +153,36 @@ void mandelCompute(Parameters *p)
 	}
 }
 
-void pmandelCompute(Parameters *p, int numThreads)
-{
-	pthread_t thr[numThreads];
-	Parameters pthr[numThreads];
-	Index idx[numThreads];
-	int Chunk = p->height / numThreads;
-
-	for(int i=0; i < numThreads; i++){
-		idx[i].chunkSize = Chunk;
-		idx[i].start = i * Chunk;
-		pthr[i].carray = &p->carray;
-		pthr[i].height = Chunk;
-		pthr[i].width = p->width;
-		pthr[i].maxIter = p->maxIter;
-		
-	}
-
-
-
-
-	//assigning pthr the same values as in p struct
-	pthr[0] = *p;
-	pthr[1] = *p;
-
-	//setting range start and end points
-	//change this to pthr[i].height = HEIGHT / numThreads -1
-	//then need mandelCompute for loop <= instead of <
-	range[0].start = 0;
-	range[0].end = HEIGHT / 2 - 1;
-	range[1].start = HEIGHT / 2;
-	range[1].end = HEIGHT;
-
-	//initializing size for carrays
-	pthr[0].carray = &(pthr[0].carray[range[0].start * pthr[0].width]);
-	pthr[1].carray = &(pthr[1].carray[range[1].start * pthr[1].width]);
-
-	pthr[0].height = range[0].end;
-	pthr[1].height = range[1].end;
-
-	pthread_create(&thr[0], NULL, dowork, (void *)&pthr[0]);
-	pthread_create(&thr[1], NULL, dowork, (void *)&pthr[1]);
-
-	pthread_join(thr[0], NULL);
-	pthread_join(thr[1], NULL);
-}
-
-void *dowork(void *arg)
+void *doWork(void *arg)
 {
 	Parameters *p = (Parameters *)arg;
 	mandelCompute(p);
 	return(NULL);
+}
+
+void parrmandelCompute(Parameters *p)
+{
+	pthread_t thr[p->numProcess];
+	Parameters pthr[p->numProcess];
+	int chunkSize = p->height / p->numProcess;
+	int start;
+
+	for(int i=0; i < p->numProcess; i++){
+		start = i * chunkSize;
+		printf("Creating Thread %d starting at %d with a chunkSize of %d\n", i, start, p->height);
+		pthr[i].carray = &(p->carray[start * p->width]);
+		pthr[i].height = chunkSize;
+		pthr[i].width = p->width;
+		pthr[i].maxIter = p->maxIter;
+		pthr[i].iterations = &(p->iterations[start * p->width]);
+		pthread_create(&thr[i], NULL, doWork, (void *)&pthr[i]);
+	}
+
+	
+	for(int i=0; i < p->numProcess; i++){
+		pthread_join(thr[i], NULL);
+	}
+	printf("Threads Joined\n");
 }
 
 // initialise the Parameters structure and dynamically allocate required arrays

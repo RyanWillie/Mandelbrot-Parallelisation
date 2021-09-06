@@ -29,3 +29,12 @@ echo "========================================"
 echo " Running GNUPLOT"
 gnuplot mandel.gp
 mv mandel.png Images/mandelFork_Pipes.png
+
+echo "========================================"
+echo " Running PThreads Program with 6 threads"
+time ./mbp 10000 -0.668 0.32 0.02 6 > /dev/null
+echo "========================================"
+
+echo " Running GNUPLOT"
+gnuplot mandel.gp
+mv mandel.png Images/mandelFork_PThreads.png
