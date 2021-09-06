@@ -14,6 +14,9 @@
 #include <time.h>
 #include "mandel.h"
 #include <pthread.h>
+#include <unistd.h>
+#include <sys/types.h>
+
 
 /* function prototypes */
 void initialise(Parameters *);

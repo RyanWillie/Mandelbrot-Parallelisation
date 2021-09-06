@@ -18,6 +18,7 @@ typedef struct {
 	double *pixels; // array for storing colour value of pixel, dim: WIDTH * HEIGHT
 	double complex *carray; // array for storing complex numbers c, dim: WIDTH * HEIGHT
 	int maxIter;  // maximum iterations before confident point is in mandelbrot set
+	int numProcess; //The number of threads to use
 } Parameters;
 
 

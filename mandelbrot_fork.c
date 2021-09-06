@@ -15,8 +15,7 @@
 #include "mandel.h"
 #include <unistd.h>
 #include <sys/wait.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+ #include <sys/socket.h>
 
 #define N 4
 
@@ -34,32 +33,34 @@ void chwrite(int fd, char *buf, int count, int chunksize);
 
 
 typedef struct{
-	int start, end;
+	int start, end, chunksize;
 } Index;
 
 /* main program – execution begins here */
 int main(int argc, char *argv[])
 {
-	int maxIter;
+	int maxIter, numProcess;
 	double xc, yc, size;
 	Parameters p;
 	
 	if (argc < 2) {
-		printf("Usage: mandelbrot maxIter [x y size]\n\nUsing default values\n");
+		printf("Usage: mandelbrot maxIter [x y size] numThreads\n\nUsing default values\n");
 		maxIter = 5000;
 		p.xMin = p.yMin = -2;
 		p.xMax = p.yMax = 2;
+		numProcess = 2;
 	}
 	else if (argc == 2) {
 		sscanf(argv[1], "%i", &maxIter);
 		p.xMin = p.yMin = -2;
 		p.xMax = p.yMax = 2;
 	}
-	else if (argc == 5) {
+	else if (argc == 6) {
 		sscanf(argv[1], "%i", &maxIter);
 		sscanf(argv[2], "%lf", &xc);
 		sscanf(argv[3], "%lf", &yc);
 		sscanf(argv[4], "%lf", &size);
+		sscanf(argv[5], "%i", &numProcess);
 		
 		size = size / 2;
 		p.xMin = xc - size;
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
 	p.maxIter = maxIter;
 	p.height = HEIGHT;
 	p.width = WIDTH;
+	p.numProcess = numProcess;
 
 	printf("xMin = %lf\nxMax = %lf\nyMin = %lf\nyMax = %lf\nMaximum iterations = %i\n", p.xMin, p.xMax, p.yMin, p.yMax, p.maxIter);
 	
@@ -169,37 +171,42 @@ void mandelCompute(Parameters *p)
 }
 
 void parrmandelCompute(Parameters *p){
+
 	int sv[2];
 	if(socketpair(AF_UNIX, SOCK_DGRAM, 0, sv) != 0){
 		perror("Socket error\n");
-	}
-	Index idx;
-
-	if(fork() == 0){
-		//Child Process
-		read(sv[CHILD], &idx, sizeof(Index));
-		printf("Startin at %d\n", idx.start);
-		p->carray = &(p->carray[idx.start * p->width]);
-		p->height /= 2;
-		mandelCompute(p);
-		p->height *= 2;
-		chwrite(sv[CHILD], (char *)p->iterations, p->width * p->height * sizeof(double),1024);
-		exit(EXIT_SUCCESS);	
 	}else{
-		//I'm the parent
-		idx.start = p->height/2;
-		idx.end = p->width-1;
-		write(sv[PARENT], &idx, sizeof(Index));
-		p->height /= 2;
-		printf("First element: %d\n", p->iterations[0]);
-		mandelCompute(p);
-		
-		//Read in the other half
-		p->height *= 2;
-		chread(sv[PARENT], (char *)&(p->iterations[idx.start*p->width]), p->width * p->height * sizeof(double), 1024);
-		
-		wait(NULL);
+		printf("Created Socket %d\n");
 	}
+	
+	Index idx;
+	idx.chunksize = p->height / p->numProcess;
+	for(int i = 0; i < p->numProcess; i++){
+		if(fork() == 0){
+			//Child Process
+			if(getpid() == getppid() + i + 1){
+				read(sv[CHILD], &idx, sizeof(Index));
+				p->carray = &(p->carray[idx.start * p->width]);
+				p->height = idx.chunksize;
+				mandelCompute(p);
+				printf("I have computed\n");
+				write(sv[CHILD], (char *)p->iterations, p->width * p->height * sizeof(int));
+			}
+			exit(EXIT_SUCCESS);	
+		}else{
+			//I'm the parent
+			idx.start = i * idx.chunksize;
+			write(sv[PARENT], &idx, sizeof(Index));
+			//Read in the other half
+		}
+	}
+
+	for(int i=0;i<p->numProcess;i++) // loop will run n times (n=5)
+    wait(NULL);
+    for(int i=0; i <p->numProcess; i++){
+		idx.start = i * idx.chunksize;
+		read(sv[PARENT], (char *)&(p->iterations[idx.start*p->width]), p->width * idx.chunksize * sizeof(int));    
+    }
 }
 
 // initialise the Parameters structure and dynamically allocate required arrays
