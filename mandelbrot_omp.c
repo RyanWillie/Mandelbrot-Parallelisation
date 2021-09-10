@@ -172,8 +172,8 @@ void mandelCompute(Parameters *p)
 	printf("	-> Using custom mandelCompute <-\n");
 	double complex c, z;
 	int i,j ,k;
-
-    #pragma omp parallel for num_threads(4) private(j, k , complex, c, z) shared(p)
+	//not sure for privatisation
+    #pragma omp parallel for num_threads(6) private(j, k, complex, c, z) shared(p)
 	for(i=0; i < p->height; i++){
 		for(j=0; j < p->width; j++){
 			z = 0 + 0*I;
