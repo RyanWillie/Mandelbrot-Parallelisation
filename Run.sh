@@ -38,3 +38,13 @@ echo "========================================"
 echo " Running GNUPLOT"
 gnuplot -p mandel.gp
 mv mandel.png Images/mandelFork_PThreads.png
+
+
+echo "========================================"
+echo " Running OpenMP Program with 6 threads"
+time ./mbomp 10000 -0.668 0.32 0.002 6 > /dev/null
+echo "========================================"
+
+echo " Running GNUPLOT"
+gnuplot -p mandel.gp
+mv mandel.png Images/mandelFork_OMP.png

@@ -14,9 +14,7 @@
 #include <time.h>
 #include "mandel.h"
 #include <unistd.h>
-#include <sys/wait.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <omp.h>
 
 #define N 4
 
@@ -29,16 +27,10 @@ void writeToFile(Parameters);
 void histogramColouring(Parameters *p);
 void freeMemory(Parameters p);
 
-
-
-typedef struct{
-	int start, end;
-} Index;
-
 /* main program – execution begins here */
 int main(int argc, char *argv[])
 {
-	int maxIter;
+	int maxIter, numProcess;
 	double xc, yc, size;
 	Parameters p;
 	
@@ -53,11 +45,13 @@ int main(int argc, char *argv[])
 		p.xMin = p.yMin = -2;
 		p.xMax = p.yMax = 2;
 	}
-	else if (argc == 5) {
+	else if (argc == 6) {
 		sscanf(argv[1], "%i", &maxIter);
 		sscanf(argv[2], "%lf", &xc);
 		sscanf(argv[3], "%lf", &yc);
 		sscanf(argv[4], "%lf", &size);
+		sscanf(argv[5], "%i", &numProcess);
+
 		
 		size = size / 2;
 		p.xMin = xc - size;
@@ -69,6 +63,7 @@ int main(int argc, char *argv[])
 	p.maxIter = maxIter;
 	p.height = HEIGHT;
 	p.width = WIDTH;
+	p.numProcess = numProcess;
 
 	printf("xMin = %lf\nxMax = %lf\nyMin = %lf\nyMax = %lf\nMaximum iterations = %i\n", p.xMin, p.xMax, p.yMin, p.yMax, p.maxIter);
 	
@@ -139,7 +134,7 @@ void histogramColouring(Parameters *p)
 	*/
 
 }
-/*
+
 // test each point in the complex plane to see if it is in the set or not
 void mandelCompute(Parameters *p)
 {
@@ -148,32 +143,7 @@ void mandelCompute(Parameters *p)
 	double complex c, z;
 	int i,j ,k;
 
-	for(i=0; i < p->height; i++){
-		for(j=0; j < p->width; j++){
-			z = 0 + 0*I;
-			c = p->carray[i * p->width + j];
-			for(k=0; k < p->maxIter; k++){
-				z = z * z + c;
-				if(cabs(z) > 2.0){
-					p->iterations[i*p->width + j] = k;
-					break;
-				}
-			}
-			if(k >= p->maxIter){
-				p->iterations[i * p->width + j] = p->maxIter - 1;
-			}
-		}			
-	}
-}
-*/
-void mandelCompute(Parameters *p)
-{
-    //mandelCompute_lib(p);
-	printf("	-> Using custom mandelCompute <-\n");
-	double complex c, z;
-	int i,j ,k;
-	//not sure for privatisation
-    #pragma omp parallel for num_threads(6) private(j, k, complex, c, z) shared(p)
+    #pragma omp parallel for num_threads(p->numProcess) private(j, k, c, z) shared(p)
 	for(i=0; i < p->height; i++){
 		for(j=0; j < p->width; j++){
 			z = 0 + 0*I;
