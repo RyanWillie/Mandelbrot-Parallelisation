@@ -1,12 +1,3 @@
-// Mandelbrot 5
-// Written by Stephen So
-// This is the fifth version of mandelbrot, rewritten from scratch, to work with gnuplot
-// Added carray
-// Histogram colour algorithm
-// Single-threaded version
-
-// Example coordinates: mandelbrot5 10000 -0.668 0.32 0.02
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -15,10 +6,6 @@
 #include "mandel.h"
 #include <unistd.h>
 #include <omp.h>
-
-#define N 4
-
-enum{CHILD, PARENT};
 
 /* function prototypes */
 void initialise(Parameters *);
@@ -79,7 +66,6 @@ int main(int argc, char *argv[])
 // free all dynamic memory in Parameters structure
 void freeMemory(Parameters p)
 {
-	//freeMemory_lib(p);
 	printf("	-> Freeing Memory <-\n");
 	free(p.pixels);
 	free(p.carray);
@@ -90,7 +76,6 @@ void freeMemory(Parameters p)
 // write coordinates and values to file for gnuplot
 void writeToFile(Parameters p)
 {
-	//writeToFile_lib(p);
 	printf("	-> Using custom writeToFile <-\n");
 	FILE *fp;
 	double complex c;
@@ -115,24 +100,6 @@ void writeToFile(Parameters p)
 void histogramColouring(Parameters *p)
 {
 	histogramColouring_lib(p);
-	//Get the total number of numiterations per pixel
-	/*
-	printf("	-> Using custom histogramColouring <-\n");
-	int total, i, j ,k, iterations;
-	for(i = 0; i < p->maxIter; i++){
-		total += p->iterations[i];
-	}
-	printf("Total :%d\n", total);
-
-	for (i = 0; i < p->width; i++) {
-		for (j = 0; j < p->height; j++) {
-			iterations = p->iterations[i * p->width + j];
-			p->histogram[i*p->width + j] += (iterations / total) ;
-			printf("Completed: %d %d\n", i, j);
-		}
-	}
-	*/
-
 }
 
 // test each point in the complex plane to see if it is in the set or not
@@ -143,8 +110,9 @@ void mandelCompute(Parameters *p)
 	double complex c, z;
 	int i,j ,k;
 
-    #pragma omp parallel for num_threads(2) private(i, j, k, c, z) shared(p)
+    #pragma omp parallel for num_threads(p->numProcess) private(i, j, k, c, z) shared(p)
 	for(i=0; i < p->height; i++){
+		//printf("Hello from process: %d\n", omp_get_thread_num());
 		for(j=0; j < p->width; j++){
 			z = 0 + 0*I;
 			c = p->carray[i * p->width + j];
