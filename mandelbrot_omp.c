@@ -143,7 +143,7 @@ void mandelCompute(Parameters *p)
 	double complex c, z;
 	int i,j ,k;
 
-    #pragma omp parallel for num_threads(p->numProcess) private(j, k, c, z) shared(p)
+    #pragma omp parallel for num_threads(2) private(i, j, k, c, z) shared(p)
 	for(i=0; i < p->height; i++){
 		for(j=0; j < p->width; j++){
 			z = 0 + 0*I;
