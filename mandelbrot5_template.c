@@ -71,13 +71,33 @@ int main(int argc, char *argv[])
 	p.width = WIDTH;
 
 	printf("xMin = %lf\nxMax = %lf\nyMin = %lf\nyMax = %lf\nMaximum iterations = %i\n", p.xMin, p.xMax, p.yMin, p.yMax, p.maxIter);
-	
+	clock_t start, end;
+    double cpu_time_used;
+	start = clock();
 	initialise(&p);
+	end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+	printf("Time used for Initialise %f\n", cpu_time_used);
+	start = clock();
 	mandelCompute(&p);
+	end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+	printf("Time used for mandelCompute %f\n", cpu_time_used);
+	start = clock();
 	histogramColouring(&p);
+	end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+	printf("Time used for Histogram Colouring %f\n", cpu_time_used);
+	start = clock();
 	writeToFile(p);
+	end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+	printf("Time used for Writing to File %f\n", cpu_time_used);
+	start = clock();
 	freeMemory(p);
-	
+	end = clock();
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+	printf("Time used for Freeing Memory %f\n", cpu_time_used);
 	return (0);
 }
 
