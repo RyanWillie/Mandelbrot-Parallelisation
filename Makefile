@@ -13,7 +13,7 @@ mbp: mandelbrot_pthread.o
 	gcc mandelbrot_pthread.o libmandel.a -lpthread -lm -o mbp
 
 mbomp: mandelbrot_omp.o
-	gcc mandelbrot_omp.o libmandel.a -fopenmp -lm -o mbomp
+	gcc mandelbrot_omp.c libmandel.a -lm -fopenmp -o mbomp
 	
 mandelbrot5_template.o: mandelbrot5_template.c
 	gcc mandelbrot5_template.c -c

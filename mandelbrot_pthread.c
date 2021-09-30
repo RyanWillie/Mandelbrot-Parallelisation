@@ -169,7 +169,7 @@ void parrmandelCompute(Parameters *p)
 
 	for(int i=0; i < p->numProcess; i++){
 		start = i * chunkSize;
-		printf("Creating Thread %d starting at %d with a chunkSize of %d\n", i, start, p->height);
+		printf("Creating Thread %d starting at %d with a chunkSize of %d\n", i, start, chunkSize);
 		pthr[i].carray = &(p->carray[start * p->width]);
 		pthr[i].height = chunkSize;
 		pthr[i].width = p->width;
