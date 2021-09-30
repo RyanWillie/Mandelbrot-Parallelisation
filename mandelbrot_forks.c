@@ -121,24 +121,6 @@ void writeToFile(Parameters p)
 void histogramColouring(Parameters *p)
 {
 	histogramColouring_lib(p);
-	//Get the total number of numiterations per pixel
-	/*
-	printf("	-> Using custom histogramColouring <-\n");
-	int total, i, j ,k, iterations;
-	for(i = 0; i < p->maxIter; i++){
-		total += p->iterations[i];
-	}
-	printf("Total :%d\n", total);
-
-	for (i = 0; i < p->width; i++) {
-		for (j = 0; j < p->height; j++) {
-			iterations = p->iterations[i * p->width + j];
-			p->histogram[i*p->width + j] += (iterations / total) ;
-			printf("Completed: %d %d\n", i, j);
-		}
-	}
-	*/
-
 }
 
 // test each point in the complex plane to see if it is in the set or not
